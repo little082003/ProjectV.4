@@ -1,0 +1,27 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/bottom_main"
+        android:icon="@drawable/baseline_home_24"
+        android:title="Main"/>
+
+    <item
+        android:id="@+id/bottom_speed"
+        android:icon="@drawable/baseline_speed_24"
+        android:title="Speed"/>
+
+    <item
+        android:id="@+id/bottom_statistics"
+        android:icon="@drawable/baseline_auto_graph_24"
+        android:title="Statistics"/>
+
+    <item
+        android:id="@+id/bottom_guide"
+        android:icon="@drawable/baseline_menu_book_24"
+        android:title="Guide"/>
+
+    <item
+        android:id="@+id/bottom_setting"
+        android:icon="@drawable/baseline_settings_24"
+        android:title="Setting"/>
+</menu>

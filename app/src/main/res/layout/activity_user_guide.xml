@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".User_Guide">
+
+    <!-- หัวข้อหลัก -->
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User Guide"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp" />
+
+    <!-- Speed Section -->
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Speed (หน้าตรวจจับความเร็ว)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/textView2"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="32dp" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="การทำงาน: เมื่อยานพาหนะขับเร็วเกินค่าที่ตั้งไว้ ระบบจะแสดงข้อมูลบนหน้านี้ทันที\n\nข้อมูลที่แสดงประกอบด้วย:\n• เวลาที่ตรวจจับได้\n• ความเร็วของยานพาหนะที่เกินกำหนด\n\nมีการแจ้งเตือนเพื่อให้ผู้ใช้ทราบเมื่อเกิดเหตุการณ์ความเร็วเกิน"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/textView3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp" />
+
+    <!-- Statistics Section -->
+    <TextView
+        android:id="@+id/textView_Statistics"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Statistics (หน้าสถิติ)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/textView"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp" />
+
+    <TextView
+        android:id="@+id/textView_Statistics2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="การทำงาน:\n• แสดงจำนวนครั้งที่มีการขับเร็วเกินในช่วงเวลาที่กำหนด\n• แสดงความเร็วที่ตรวจจับได้แต่ละครั้งในรูปแบบกราฟ\n\nประโยชน์:\nช่วยให้ผู้ใช้วิเคราะห์ช่วงเวลาที่มักเกิดการขับเร็วเกิน"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/textView_Statistics"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp" />
+
+    <!-- Setting Section -->
+    <TextView
+        android:id="@+id/textView_Setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Setting (หน้าการตั้งค่า)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/textView_Statistics2"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp" />
+
+    <TextView
+        android:id="@+id/textView_Setting2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="การตั้งค่าที่สามารถปรับได้:\n• เปลี่ยนรูปโปรไฟล์: อัปโหลดหรือเปลี่ยนรูปภาพผู้ใช้ใหม่\n• เปลี่ยนชื่อ: แก้ไขชื่อที่แสดงในระบบ\n• เปลี่ยนหน่วยความเร็ว: เลือกระหว่าง km/h หรือ mph"
+        android:textSize="15sp"
+        app:layout_constraintTop_toBottomOf="@id/textView_Setting"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp" />
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bottom_background"
+        app:itemIconSize="25dp"
+        app:itemIconTint="@drawable/item_selector"
+        app:itemRippleColor="@android:color/transparent"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar4"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
