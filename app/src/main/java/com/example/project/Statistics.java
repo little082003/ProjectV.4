@@ -17,7 +17,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis; // เพิ่ม import นี้
+import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -39,13 +39,15 @@ public class Statistics extends AppCompatActivity {
 
     // --- UI Elements ---
     private BottomNavigationView bottomNavigationView;
-    private TextView speedText, motionText, freqercyText;
     private LineChart speedChart;
     private ProgressBar Progress;
+    private TextView overspeedCountTextView; // << แก้ไข: ประกาศตัวแปร TextView
 
     // --- Firebase ---
     private DatabaseReference hb100Ref;
     private ValueEventListener hb100Listener;
+    private DatabaseReference overspeedRef;     // << เพิ่ม: Reference สำหรับดึงจำนวน Overspeed
+    private ValueEventListener overspeedListener; // << เพิ่ม: Listener สำหรับดึงจำนวน Overspeed
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,71 +70,36 @@ public class Statistics extends AppCompatActivity {
         });
 
         // --- เชื่อมโยง View ---
-        speedText = findViewById(R.id.speed);
-        motionText = findViewById(R.id.motion);
-        freqercyText = findViewById(R.id.frequency);
         speedChart = findViewById(R.id.speedChart);
         Progress = findViewById(R.id.progressBar3);
+        overspeedCountTextView = findViewById(R.id.cntoverspeed); // << แก้ไข: เชื่อมโยง TextView ให้ถูกต้อง
         Progress.setVisibility(View.GONE);
 
         // --- ตั้งค่า ---
         setupBottomNavigation();
         setupChart();
         startFetchingData();
+        startFetchingOverspeedCount(); // << เพิ่ม: เรียกใช้เมธอดเพื่อดึงข้อมูล
     }
 
     private void setupBottomNavigation() {
-        // ... โค้ด BottomNavigationView แบบดั้งเดิม ...
         bottomNavigationView = findViewById(R.id.bottomNavigationView);
         bottomNavigationView.setSelectedItemId(R.id.bottom_statistics);
         bottomNavigationView.setOnItemSelectedListener(item -> {
             switch (item.getItemId()) {
                 case R.id.bottom_main:
-                    Progress.setVisibility(View.VISIBLE);
-                    new Thread(() -> {
-                        try { Thread.sleep(1000); } catch (Exception e) { e.printStackTrace(); }
-                        runOnUiThread(() -> {
-                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                            overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
-                            finish();
-                        });
-                    }).start();
+                    startActivityWithProgress(MainActivity.class);
                     return true;
-                // ... case อื่นๆ ...
                 case R.id.bottom_speed:
-                    Progress.setVisibility(View.VISIBLE);
-                    new Thread(() -> {
-                        try { Thread.sleep(1000); } catch (Exception e) { e.printStackTrace(); }
-                        runOnUiThread(() -> {
-                            startActivity(new Intent(getApplicationContext(), Overspeed.class));
-                            overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
-                            finish();
-                        });
-                    }).start();
+                    startActivityWithProgress(Overspeed.class);
                     return true;
                 case R.id.bottom_statistics:
                     return true;
                 case R.id.bottom_guide:
-                    Progress.setVisibility(View.VISIBLE);
-                    new Thread(() -> {
-                        try { Thread.sleep(1000); } catch (Exception e) { e.printStackTrace(); }
-                        runOnUiThread(() -> {
-                            startActivity(new Intent(getApplicationContext(), User_Guide.class));
-                            overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
-                            finish();
-                        });
-                    }).start();
+                    startActivityWithProgress(User_Guide.class);
                     return true;
                 case R.id.bottom_setting:
-                    Progress.setVisibility(View.VISIBLE);
-                    new Thread(() -> {
-                        try { Thread.sleep(1000); } catch (Exception e) { e.printStackTrace(); }
-                        runOnUiThread(() -> {
-                            startActivity(new Intent(getApplicationContext(), setting.class));
-                            overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
-                            finish();
-                        });
-                    }).start();
+                    startActivityWithProgress(setting.class);
                     return true;
                 default:
                     return false;
@@ -146,16 +113,14 @@ public class Statistics extends AppCompatActivity {
         speedChart.setDragEnabled(true);
         speedChart.setScaleEnabled(true);
         speedChart.setPinchZoom(true);
-
         speedChart.getAxisLeft().setAxisMinimum(0f);
         speedChart.getAxisRight().setEnabled(false);
 
-        // --- ส่วนที่แก้ไข: ตั้งค่าแกน X ให้แสดงเป็นเวลา ---
         XAxis xAxis = speedChart.getXAxis();
-        xAxis.setValueFormatter(new TimeAxisValueFormatter()); // ใช้ Formatter ที่เราสร้าง
-        xAxis.setPosition(XAxis.XAxisPosition.TOP);           // ย้ายป้ายกำกับไปไว้ข้างบน
-        xAxis.setGranularity(1f);                               // ป้องกันป้ายกำกับซ้อนกัน
-        xAxis.setLabelRotationAngle(-45);                       // เอียงป้ายกำกับให้อ่านง่าย
+        xAxis.setValueFormatter(new TimeAxisValueFormatter());
+        xAxis.setPosition(XAxis.XAxisPosition.TOP);
+        xAxis.setGranularity(1f);
+        xAxis.setLabelRotationAngle(-45);
 
         LineDataSet dataSet = new LineDataSet(null, "Speed");
         dataSet.setColor(ContextCompat.getColor(this, R.color.purple_500));
@@ -175,16 +140,13 @@ public class Statistics extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     Double speedKmh = snapshot.child("Speed_kmh").getValue(Double.class);
-                    Double frequency = snapshot.child("Frequency").getValue(Double.class);
-                    Boolean motionDetected = snapshot.child("MotionDetected").getValue(Boolean.class);
-
-                    SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
-                    String unit = prefs.getString(Constants.KEY_SPEED_UNIT, "km/h");
-
-                    double displaySpeed = 0.0;
-                    String unitLabel = "km/h";
 
                     if (speedKmh != null) {
+                        SharedPreferences prefs = getSharedPreferences(Constants.PREFS_NAME, MODE_PRIVATE);
+                        String unit = prefs.getString(Constants.KEY_SPEED_UNIT, "km/h");
+                        double displaySpeed;
+                        String unitLabel;
+
                         if (unit.equals("mph")) {
                             displaySpeed = speedKmh * 0.621371;
                             unitLabel = "mph";
@@ -192,13 +154,7 @@ public class Statistics extends AppCompatActivity {
                             displaySpeed = speedKmh;
                             unitLabel = "km/h";
                         }
-                    }
 
-                    speedText.setText(String.format("%.2f %s", displaySpeed, unitLabel));
-                    freqercyText.setText(frequency != null ? String.format("%.2f Hz", frequency) : "N/A");
-                    motionText.setText(motionDetected != null && motionDetected ? "Detected" : "No Detected!");
-
-                    if (speedKmh != null) {
                         LineData data = speedChart.getData();
                         if (data != null) {
                             ILineDataSet dataSet = data.getDataSetByIndex(0);
@@ -207,22 +163,51 @@ public class Statistics extends AppCompatActivity {
                             }
                         }
 
-                        // --- ส่วนที่แก้ไข: สร้าง Entry ด้วยเวลาปัจจุบัน ---
                         long timestamp = System.currentTimeMillis();
                         Entry newEntry = new Entry(timestamp, (float) displaySpeed);
-                        updateChart(newEntry); // ส่ง Entry ทั้งก้อนไปอัปเดต
+                        updateChart(newEntry);
                     }
                 }
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // ... โค้ด onCancelled ...
+                // Handle error
             }
         };
         hb100Ref.addValueEventListener(hb100Listener);
     }
 
-    // --- ส่วนที่แก้ไข: รับพารามิเตอร์เป็น Entry ---
+    /**
+     * << เพิ่ม: เมธอดใหม่ >>
+     * ดึงข้อมูลจำนวนครั้งที่ความเร็วเกินกำหนดจาก Firebase Realtime Database
+     * สมมติว่าข้อมูลถูกเก็บไว้ที่ path "Overspeed/count"
+     */
+    private void startFetchingOverspeedCount() {
+        overspeedRef = FirebaseDatabase.getInstance().getReference("Overspeed/count");
+        overspeedListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Integer count = snapshot.getValue(Integer.class);
+                    if (count != null) {
+                        overspeedCountTextView.setText(String.valueOf(count));
+                    } else {
+                        overspeedCountTextView.setText("0");
+                    }
+                } else {
+                    overspeedCountTextView.setText("0");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                overspeedCountTextView.setText("-"); // แสดงสัญลักษณ์เมื่อมีข้อผิดพลาด
+            }
+        };
+        overspeedRef.addValueEventListener(overspeedListener);
+    }
+
+
     private void updateChart(Entry newEntry) {
         LineData data = speedChart.getData();
         if (data != null) {
@@ -236,14 +221,31 @@ public class Statistics extends AppCompatActivity {
                 dataSet.removeFirst();
             }
 
-            // ใช้ newEntry ที่ได้รับมาโดยตรง
             data.addEntry(newEntry, 0);
 
             data.notifyDataChanged();
             speedChart.notifyDataSetChanged();
-            speedChart.moveViewToX(newEntry.getX()); // เลื่อนไปที่เวลาล่าสุด
+            speedChart.moveViewToX(newEntry.getX());
             speedChart.invalidate();
         }
+    }
+
+    // Helper method เพื่อลดโค้ดซ้ำซ้อนใน Bottom Navigation
+    private void startActivityWithProgress(Class<?> activityClass) {
+        Progress.setVisibility(View.VISIBLE);
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            runOnUiThread(() -> {
+                Progress.setVisibility(View.GONE);
+                startActivity(new Intent(getApplicationContext(), activityClass));
+                overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
+                finish();
+            });
+        }).start();
     }
 
     @Override
@@ -251,6 +253,10 @@ public class Statistics extends AppCompatActivity {
         super.onDestroy();
         if (hb100Ref != null && hb100Listener != null) {
             hb100Ref.removeEventListener(hb100Listener);
+        }
+        // << เพิ่ม: ลบ listener ของ overspeed count เพื่อป้องกัน memory leak >>
+        if (overspeedRef != null && overspeedListener != null) {
+            overspeedRef.removeEventListener(overspeedListener);
         }
     }
 }
